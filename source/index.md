@@ -14,7 +14,31 @@ includes:
 search: true
 ---
 
-# Moip\Moip
+# Introdução
+
+Esse é o kit de desenvolvimento PHP para a API Moip versão 2.0. Através desse SDK, você conseguirá iniciar sua integração e finalizá-la em poucos instantes.
+
+## Instalação
+
+O meio mais rápido e simples para instalação do SDK, é através do composer. Para isso, basta adicionar ao seu arquivo `composer.json`, o seguinte:
+
+    `{
+        "require" : {
+            "moip/sdk-php" : "dev-master"
+        }
+    }`
+
+Uma vez configurado em seu composer.json, basta executar:
+
+`composer install`
+
+<aside class="warning">O SDK requer PHP >= 5.3</aside>
+
+# Moip
+
+Namespace raiz do SDK.
+
+## Moip\Moip
 
 O participante `Moip\Moip` é o ponto de entrada do SDK. É um Façade que além de permitir um ponto central de configuração, ainda permite o acesso aos outros participantes.
 
@@ -58,7 +82,25 @@ $moip = new Moip($auth, Moip::SANDBOX_ENDPOINT);
 |`Moip\Resource\Payment` | `payments()` | Cria uma nova instância do objeto `Payment`. |
 |`Moip\Resource\Multiorders` | `multiorders()` | Cria uma nova instância do objeto `Multiorders`. |
 
-# Moip\Resource\Orders
+## Moip\MoipBasicAuth
+
+Representa uma autenticação HTTP Basic para o tráfego das mensagens da API. Todas as mensagens trocadas pela API precisam ser autenticadas, seja através de uma autenticação HTTP Basic, ou utilizando uma autenticação de terceiros através de OAuth.
+
+```
+<?php
+require 'vendor/autoload.php';
+
+use Moip\MoipBasicAuth;
+
+$token = '0ERVDN386WE3RZRI4YYG6QCDLMJ57LBR';
+$key = 'SRZGHRXYOT0PVDLRB3YE8XQWLNLA0JRXTKOIDVDQ';
+
+$auth = new MoipBasicAuth($token, $key);
+```
+
+# Moip\Resources
+
+## Moip\Resources\Orders
 
 Um Pagamento é representado, criado ou consultado através do participante `self`. A tabela abaixo descreve sua interface e parâmetros:
 
