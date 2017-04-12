@@ -112,7 +112,12 @@ class Account extends MoipResource
      */
     public function getId()
     {
-        return $this->getIfSet('id');
+    	$href = $this->getIfSet('self', $this->data->_links);
+    	$id = explode("/", $href->href);
+    	$id = $id[count($id)-1];
+
+    	return $id;
+//        return $this->getIfSet('id');
     }
 
     /**

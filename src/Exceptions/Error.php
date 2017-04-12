@@ -29,6 +29,13 @@ class Error
      */
     private $description;
 
+	/**
+	 * AdditionalInfo of error.
+	 *
+	 * @var string
+	 */
+	private $additionalInfo;
+
     /**
      * Error constructor.
      *
@@ -37,12 +44,14 @@ class Error
      * @param string $code        unique error identifier.
      * @param string $path        represents the field where the error ocurred.
      * @param string $description error description.
+     * @param string $additionalInfo error additional Info.
      */
-    public function __construct($code, $path, $description)
+    public function __construct($code, $path, $description, $additionalInfo)
     {
         $this->code = $code;
         $this->path = $path;
         $this->description = $description;
+        $this->additionalInfo = $additionalInfo;
     }
 
     /**
@@ -85,13 +94,24 @@ class Error
     public static function parseErrors($json_string)
     {
         $error_obj = json_decode($json_string);
+
+		$additionalInfo = (isset($error_obj->additionalInfo))? $error_obj->additionalInfo : null;
+
         $errors = [];
         if (!empty($error_obj->errors)) {
             foreach ($error_obj->errors as $error) {
-                $errors[] = new self($error->code, $error->path, $error->description);
+                $errors[] = new self($error->code, $error->path, $error->description, $additionalInfo);
             }
         }
 
         return $errors;
     }
+
+	/**
+	 * @return string
+	 */
+	public function getAdditionalInfo()
+	{
+		return $this->additionalInfo;
+	}
 }
