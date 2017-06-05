@@ -3,17 +3,17 @@
 namespace Moip\Tests\Resource;
 
 use Moip\Resource\Orders;
-use Moip\Tests\MoipTestCase;
+use Moip\Tests\TestCase;
 
-class OrdersTest extends MoipTestCase
+class OrdersTest extends TestCase
 {
     /**
      * Send http request.
      *
-     * @param Orders $order
-     * @param string $body
+     * @param \Moip\Resource\Orders $order
+     * @param string                $body
      *
-     * @return Orders
+     * @return \Moip\Resource\Orders
      */
     private function executeOrder(Orders $order = null, $body = null)
     {
@@ -29,7 +29,45 @@ class OrdersTest extends MoipTestCase
     }
 
     /**
-     * Test creating an order.
+     * @const string
+     */
+    public function testAssertConstPath()
+    {
+        $this->assertEquals('orders', Orders::PATH);
+    }
+
+    /**
+     * Defines what kind of payee as pripmary.
+     *
+     * @const string
+     */
+    public function testAssertConstReceiverTypePrimary()
+    {
+        $this->assertEquals('PRIMARY', Orders::RECEIVER_TYPE_PRIMARY);
+    }
+
+    /**
+     * Defines what kind of payee as secundary.
+     *
+     * @const string
+     */
+    public function testAssertConstReceiverTypeSecpndary()
+    {
+        $this->assertEquals('SECONDARY', Orders::RECEIVER_TYPE_SECONDARY);
+    }
+
+    /**
+     * Currency used in the application.
+     *
+     * @const string
+     */
+    public function testAssertConstAmountCurrency()
+    {
+        $this->assertEquals('BRL', Orders::AMOUNT_CURRENCY);
+    }
+
+    /**
+     * MoipTest creating an order.
      */
     public function testCreateOrder()
     {
@@ -51,7 +89,7 @@ class OrdersTest extends MoipTestCase
     }
 
     /**
-     *Test if the total is correct.
+     *MoipTest if the total is correct.
      */
     public function testTotal()
     {
@@ -62,7 +100,7 @@ class OrdersTest extends MoipTestCase
     }
 
     /**
-     * Test if the total is equal to the expected total.
+     * MoipTest if the total is equal to the expected total.
      */
     public function testTotalConstant()
     {

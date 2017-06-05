@@ -87,7 +87,7 @@ class Orders extends MoipResource
         $receiver->moipAccount = new stdClass();
         $receiver->moipAccount->id = $moipAccount;
         if (!empty($fixed)) {
-        	$receiver->amount = new stdClass();
+            $receiver->amount = new stdClass();
             $receiver->amount->fixed = $fixed;
         }
         $receiver->type = $type;
@@ -109,6 +109,8 @@ class Orders extends MoipResource
         $this->data->amount->subtotals = new stdClass();
         $this->data->items = [];
         $this->data->receivers = [];
+        $this->data->checkoutPreferences = new stdClass();
+        $this->data->checkoutPreferences->redirectUrls = new stdClass();
     }
 
     /**
@@ -141,8 +143,7 @@ class Orders extends MoipResource
         $this->orders->data->amount->subtotals = $response->amount->subtotals;
 
         $customer = new Customer($this->moip);
-        $customer->populate($response->customer);
-        $this->orders->data->customer = $customer;
+        $this->orders->data->customer = $customer->populate($response->customer);
 
         $this->orders->data->payments = $this->structure($response, Payment::PATH, Payment::class);
         $this->orders->data->refunds = $this->structure($response, Refund::PATH, Refund::class);
@@ -423,6 +424,16 @@ class Orders extends MoipResource
     }
 
     /**
+     * Get checkout preferences of the order.
+     *
+     * @return string
+     */
+    public function getCheckoutPreferences()
+    {
+        return $this->getIfSet('checkoutPreferences');
+    }
+
+    /**
      * Structure of payment.
      *
      * @return \Moip\Resource\Payment
@@ -475,6 +486,23 @@ class Orders extends MoipResource
     public function setCustomer(Customer $customer)
     {
         $this->data->customer = $customer;
+
+        return $this;
+    }
+
+    /**
+     * Set customer id associated with the order.
+     *
+     * @param string $id Customer's id.
+     *
+     * @return $this
+     */
+    public function setCustomerId($id)
+    {
+        if (!isset($this->data->customer)) {
+            $this->data->customer = new stdClass();
+        }
+        $this->data->customer->id = $id;
 
         return $this;
     }
@@ -533,6 +561,34 @@ class Orders extends MoipResource
     public function setShippingAmount($value)
     {
         $this->data->amount->subtotals->shipping = (float) $value;
+
+        return $this;
+    }
+
+    /**
+     * Set URL for redirection in case of success.
+     *
+     * @param string $urlSuccess UrlSuccess.
+     *
+     * @return $this
+     */
+    public function setUrlSuccess($urlSuccess = '')
+    {
+        $this->data->checkoutPreferences->redirectUrls->urlSuccess = $urlSuccess;
+
+        return $this;
+    }
+
+    /**
+     * Set URL for redirection in case of failure.
+     *
+     * @param string $urlFailure UrlFailure.
+     *
+     * @return $this
+     */
+    public function setUrlFailure($urlFailure = '')
+    {
+        $this->data->checkoutPreferences->redirectUrls->urlFailure = $urlFailure;
 
         return $this;
     }
