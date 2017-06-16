@@ -210,7 +210,17 @@ class Account extends MoipResource
         return $this->getIfSet('type', $this->data);
     }
 
-    /**
+	/**
+	 * Get account email.
+	 *
+	 * @return string Email address.
+	 */
+	public function getEmail()
+	{
+		return $this->getIfSet('address', $this->data->email);
+	}
+
+	/**
      * Mount the seller structure from account.
      *
      * @param \stdClass $response
