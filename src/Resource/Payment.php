@@ -21,6 +21,11 @@ class Payment extends MoipResource
     const MULTI_PAYMENTS_PATH = 'multipayments';
 
     /**
+     * @const string
+     */
+    const SIMULATOR_PATH = 'simulador';
+
+    /**
      * Payment means.
      *
      * @const string
@@ -130,8 +135,7 @@ class Payment extends MoipResource
         if ($this->order !== null) {
             $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, Orders::PATH, $this->order->getId(), self::PATH);
         } else {
-            $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, Multiorders::PATH, $this->multiorder->getId(),
-                self::MULTI_PAYMENTS_PATH);
+            $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, Multiorders::PATH, $this->multiorder->getId(), self::MULTI_PAYMENTS_PATH);
         }
 
         $response = $this->httpRequest($path, Requests::POST, $this);
@@ -185,6 +189,7 @@ class Payment extends MoipResource
         $payment->data->amount->currency = $this->getIfSet('currency', $response->amount);
         $payment->data->installmentCount = $this->getIfSet('installmentCount', $response);
         $payment->data->fundingInstrument = $this->getIfSet('fundingInstrument', $response);
+        $payment->data->escrows = $this->getIfSet('escrows', $response);
         $payment->data->fees = $this->getIfSet('fees', $response);
         $payment->data->refunds = $this->getIfSet('refunds', $response);
         $payment->data->_links = $this->getIfSet('_links', $response);
@@ -205,6 +210,19 @@ class Payment extends MoipResource
         $refund->setPayment($this);
 
         return $refund;
+    }
+
+    /**
+     * Escrows.
+     *
+     * @return Escrow
+     */
+    public function escrows()
+    {
+        $escrow = new Escrow($this->moip);
+        $escrow->setId($this->getEscrow()->id);
+
+        return $escrow;
     }
 
     /**
@@ -250,13 +268,43 @@ class Payment extends MoipResource
 
     /**
      * Get href to Boleto
-     **.
+     * *.
      *
      * @return stdClass
      */
     public function getHrefBoleto()
     {
         return $this->getIfSet('_links')->payBoleto->redirectHref;
+    }
+
+    /**
+     * Returns payment amount.
+     *
+     * @return stdClass
+     */
+    public function getAmount()
+    {
+        return $this->data->amount;
+    }
+
+    /**
+     * Returns escrow.
+     *
+     * @return stdClass
+     */
+    public function getEscrow()
+    {
+        return reset($this->data->escrows);
+    }
+
+    /**
+     * Returns installment count.
+     *
+     * @return stdClass
+     */
+    public function getInstallmentCount()
+    {
+        return $this->data->installmentCount;
     }
 
     /**
@@ -333,14 +381,16 @@ class Payment extends MoipResource
      *
      * @param string                  $hash   Credit card hash encripted using Moip.js
      * @param \Moip\Resource\Customer $holder
+     * @param bool                    $store  Flag to know if credit card should be saved.
      *
      * @return $this
      */
-    public function setCreditCardHash($hash, Customer $holder)
+    public function setCreditCardHash($hash, Customer $holder, $store = true)
     {
         $this->data->fundingInstrument->method = self::METHOD_CREDIT_CARD;
         $this->data->fundingInstrument->creditCard = new stdClass();
         $this->data->fundingInstrument->creditCard->hash = $hash;
+        $this->data->fundingInstrument->creditCard->store = $store;
         $this->setCreditCardHolder($holder);
 
         return $this;
@@ -356,10 +406,11 @@ class Payment extends MoipResource
      * @param string                  $number          Card number.
      * @param int                     $cvc             Card Security Code.
      * @param \Moip\Resource\Customer $holder
+     * @param bool                    $store           Flag to know if credit card should be saved.
      *
      * @return $this
      */
-    public function setCreditCard($expirationMonth, $expirationYear, $number, $cvc, Customer $holder)
+    public function setCreditCard($expirationMonth, $expirationYear, $number, $cvc, Customer $holder, $store = true)
     {
         $this->data->fundingInstrument->method = self::METHOD_CREDIT_CARD;
         $this->data->fundingInstrument->creditCard = new stdClass();
@@ -367,6 +418,7 @@ class Payment extends MoipResource
         $this->data->fundingInstrument->creditCard->expirationYear = $expirationYear;
         $this->data->fundingInstrument->creditCard->number = $number;
         $this->data->fundingInstrument->creditCard->cvc = $cvc;
+        $this->data->fundingInstrument->creditCard->store = $store;
         $this->setCreditCardHolder($holder);
 
         return $this;
@@ -485,6 +537,21 @@ class Payment extends MoipResource
     }
 
     /**
+     * Set escrow to a payment.
+     *
+     * @param string $description
+     *
+     * @return $this
+     */
+    public function setEscrow($description)
+    {
+        $this->data->escrow = new stdClass();
+        $this->data->escrow->description = $description;
+
+        return $this;
+    }
+
+    /**
      * Capture a pre-authorized amount on a credit card payment.
      *
      * @throws \Exception
@@ -493,11 +560,10 @@ class Payment extends MoipResource
      */
     public function capture()
     {
-        if ($this->order !== null) {
-            $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, self::PATH, $this->getId(), 'capture');
-        } else {
+        if (is_null($this->order)) {
             throw new \Exception('Sorry, multipayment capture is not available on this version');
         }
+        $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, self::PATH, $this->getId(), 'capture');
 
         $response = $this->httpRequest($path, Requests::POST, $this);
 
@@ -513,14 +579,33 @@ class Payment extends MoipResource
      */
     public function avoid()
     {
-        if ($this->order !== null) {
-            $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, self::PATH, $this->getId(), 'void');
-        } else {
+        if (is_null($this->order)) {
             throw new \Exception('Sorry, multipayment capture is not available on this version');
         }
+        $path = sprintf('/%s/%s/%s/%s', MoipResource::VERSION, self::PATH, $this->getId(), 'void');
 
         $response = $this->httpRequest($path, Requests::POST, $this);
 
         return $this->populate($response);
+    }
+
+    /**
+     * Authorize a payment (Available only in sandbox to credit card payment with status IN_ANALYSIS and billet payment with status WAITING).
+     *
+     * @return bool
+     */
+    public function authorize($amount = null)
+    {
+        if (is_null($amount)) {
+            $amount = $this->getAmount()->total;
+        }
+        $path = sprintf('/%s/%s?payment_id=%s&amount=%s', self::SIMULATOR_PATH, 'authorize', $this->getId(), $amount);
+        $response = $this->httpRequest($path, Requests::GET);
+
+        if (empty($response)) {
+            return true;
+        }
+
+        return false;
     }
 }

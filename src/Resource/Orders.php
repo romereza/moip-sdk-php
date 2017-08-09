@@ -3,6 +3,8 @@
 namespace Moip\Resource;
 
 use ArrayIterator;
+use Moip\Helper\Filters;
+use Moip\Helper\Pagination;
 use stdClass;
 
 /**
@@ -118,6 +120,7 @@ class Orders extends MoipResource
         $this->data->receivers = [];
         $this->data->checkoutPreferences = new stdClass();
         $this->data->checkoutPreferences->redirectUrls = new stdClass();
+        $this->data->checkoutPreferences->installments = [];
     }
 
     /**
@@ -441,6 +444,18 @@ class Orders extends MoipResource
     }
 
     /**
+     * Create a new Orders list instance.
+     *
+     * @return \Moip\Resource\OrdersList
+     */
+    public function getList(Pagination $pagination = null, Filters $filters = null, $qParam = '')
+    {
+        $orderList = new OrdersList($this->moip);
+
+        return $orderList->get($pagination, $filters, $qParam);
+    }
+
+    /**
      * Structure of payment.
      *
      * @return \Moip\Resource\Payment
@@ -609,12 +624,14 @@ class Orders extends MoipResource
      *
      * @return $this
      */
-    public function setInstallmentCheckoutPreferences($quantity, $discountValue = 0, $additionalValue = 0)
+    public function addInstallmentCheckoutPreferences($quantity, $discountValue = 0, $additionalValue = 0)
     {
-        $this->data->checkoutPreferences->installments = new stdClass();
-        $this->data->checkoutPreferences->installments->quantity = $quantity;
-        $this->data->checkoutPreferences->installments->discount = $discountValue;
-        $this->data->checkoutPreferences->installments->addition = $additionalValue;
+        $installmentPreferences = new stdClass();
+        $installmentPreferences->quantity = $quantity;
+        $installmentPreferences->discount = $discountValue;
+        $installmentPreferences->addition = $additionalValue;
+
+        $this->data->checkoutPreferences->installments[] = $installmentPreferences;
 
         return $this;
     }
